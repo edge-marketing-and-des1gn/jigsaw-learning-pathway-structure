@@ -57,6 +57,20 @@
   .view-toggle{margin-left:auto;}
   .view-toggle button.active{background:var(--event);color:#fff;}
 
+  .custom-range{display:inline-flex;align-items:stretch;}
+  .custom-range input[type=date]{font-family:var(--font-mono);font-size:9.5px;padding:4px 7px;line-height:1.6;
+    border:none;border-right:1px solid var(--line);color:var(--text-dim);background:#fff;width:118px;}
+  .custom-range input[type=date]:focus{position:relative;z-index:1;}
+  .custom-sep{display:flex;align-items:center;padding:0 6px;font-family:var(--font-mono);font-size:9.5px;
+    color:var(--text-dimmer);border-right:1px solid var(--line);background:#fff;}
+  .custom-range button{font-family:var(--font-mono);font-size:9.5px;padding:4px 10px;line-height:1.6;
+    background:#fff;border:none;color:var(--text-dim);cursor:pointer;}
+  .custom-range button:hover{background:var(--bg);}
+  .custom-range.active{border-color:var(--root);}
+  .custom-range.active button{background:var(--root);color:#fff;}
+  .custom-range input.bad{color:var(--rust);}
+  @media (max-width:900px){ .custom-range input[type=date]{width:96px;} }
+
   .stats{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:fit-content;background:#fff;}
   .stat{padding:10px 20px;border-right:1px solid var(--line);}
   .stat:last-child{border-right:none;}
@@ -221,6 +235,12 @@
         <button class="period-btn" data-mode="month" data-value="0" type="button">This month</button>
         <button class="period-btn" data-mode="month" data-value="1" type="button">Last month</button>
         <button class="period-btn" data-mode="range" data-value="6" type="button">Last 6 months</button>
+      </div>
+      <div class="seg custom-range" id="customRange" role="group" aria-label="Custom date range">
+        <input type="date" id="customFrom" aria-label="From date">
+        <span class="custom-sep">–</span>
+        <input type="date" id="customTo" aria-label="To date">
+        <button id="customApply" type="button" title="Show this exact date range">Go</button>
       </div>
       <div class="seg view-toggle" role="group" aria-label="View">
         <button class="view-btn" data-view="pathway" type="button">Pathway</button>
@@ -1375,7 +1395,7 @@ const inFlight = new Map();             // one request per period, however many 
 let requestSeq = 0;                     // only the newest request is allowed to paint
 let prefetchStarted = false;
 
-const periodKey = (mode, value) => mode + ':' + value;
+const periodKey = (mode, value) => mode === 'custom' ? ('custom:' + value.start + ':' + value.end) : (mode + ':' + value);
 
 function setDataStatus(text, ok){
   const el = document.getElementById('dataStatus');
@@ -1386,8 +1406,9 @@ function setDataStatus(text, ok){
 }
 function setActivePeriodButton(mode, value){
   document.querySelectorAll('.period-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode && Number(btn.dataset.value) === value);
+    btn.classList.toggle('active', mode !== 'custom' && btn.dataset.mode === mode && Number(btn.dataset.value) === value);
   });
+  document.getElementById('customRange').classList.toggle('active', mode === 'custom');
 }
 // Dims whichever panel is on screen and puts a spinner over it. The
 // chart underneath stays readable, so a slow period never leaves you
@@ -1443,7 +1464,8 @@ function fetchPeriod(mode, value){
   const key = periodKey(mode, value);
   if (inFlight.has(key)) return inFlight.get(key);
 
-  const param = (mode === 'range') ? ('rangeMonths=' + value) : ('months=' + value);
+  const param = mode === 'custom' ? ('customStart=' + value.start + '&customEnd=' + value.end)
+    : (mode === 'range') ? ('rangeMonths=' + value) : ('months=' + value);
   const sep = LIVE_DATA_URL.indexOf('?') === -1 ? '?' : '&';
   const promise = fetch(LIVE_DATA_URL + sep + param, { cache: 'no-store' })
     .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
@@ -1512,6 +1534,7 @@ async function loadPeriod(mode, value){
 }
 
 function periodName(mode, value){
+  if (mode === 'custom') return 'that date range';
   if (mode === 'range') return 'the last ' + value + ' months';
   return value === 0 ? 'this month' : value === 1 ? 'last month' : 'that period';
 }
@@ -1534,6 +1557,30 @@ function startPrefetch(currentKey){
 document.querySelectorAll('.period-btn').forEach(btn => {
   btn.addEventListener('click', () => loadPeriod(btn.dataset.mode, Number(btn.dataset.value)));
 });
+
+// Custom date range — a "from" and "to" picked by hand, alongside the
+// three preset buttons above. Nothing loads until both dates are filled
+// in and "Go" is pressed (or Enter, from either field); an out-of-order
+// pair just gets a quiet red highlight on "to" rather than an alert.
+(function setUpCustomRange(){
+  const fromEl = document.getElementById('customFrom');
+  const toEl = document.getElementById('customTo');
+  const today = new Date().toISOString().slice(0, 10);
+  fromEl.max = today; toEl.max = today;
+
+  function apply(){
+    const from = fromEl.value, to = toEl.value;
+    const bad = !!(from && to && from > to);
+    toEl.classList.toggle('bad', bad);
+    if (!from || !to || bad) return;
+    loadPeriod('custom', { start: from, end: to });
+  }
+  document.getElementById('customApply').addEventListener('click', apply);
+  [fromEl, toEl].forEach(el => {
+    el.addEventListener('change', () => toEl.classList.remove('bad'));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
+  });
+})();
 
 setView('pathway');
 loadPeriod('month', 1); // last month on first load — a new month has little data in its first days
