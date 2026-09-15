@@ -311,7 +311,7 @@
     <div class="split">
       <nav class="picker" id="picker" aria-label="Choose starting pages">
         <h3>Pages sessions start on</h3>
-        <p class="note">The busiest eight are on the chart already. Tick any others to add them.</p>
+        <p class="note">The busiest ten are on the chart already. Tick any others to add them.</p>
         <input class="picker-search" id="pickerSearch" type="search" placeholder="Find a page…" aria-label="Find a page">
         <div class="picker-actions">
           <button class="mini-btn" id="pickTop5" type="button">Top 5</button>
@@ -630,9 +630,10 @@ function fit(text, font, maxW){
 /* =========================================================
    3. STATE
 ========================================================= */
-const DEFAULT_START_COUNT = 8;   // starting pages ticked on first load
+const DEFAULT_START_COUNT = 10;  // starting pages ticked on first load
 const DEFAULT_OPEN_COUNT  = 3;   // of those, how many have their first step open
-const PICKER_PREVIEW      = 10;  // rows shown before "Show all"
+const PICKER_PREVIEW      = 12;  // rows shown before "Show all" — a couple past the
+                                 // ticked ten, so it's visible that the list continues
 
 const state = {
   tree: FALLBACK_TREE,
@@ -868,7 +869,7 @@ function renderChart(){
     svg.setAttribute('width', 0); svg.setAttribute('height', 0);
     const box = document.createElement('div');
     box.className = 'chart-empty';
-    box.innerHTML = '<p>Nothing on the chart yet. Tick a starting page on the left and its branch appears here — tick more and they stack up on the same diagram.</p><button type="button">Put the top 8 pages back</button>';
+    box.innerHTML = '<p>Nothing on the chart yet. Tick a starting page on the left and its branch appears here — tick more and they stack up on the same diagram.</p><button type="button">Put the top 10 pages back</button>';
     box.querySelector('button').addEventListener('click', () => selectTop(DEFAULT_START_COUNT, DEFAULT_OPEN_COUNT));
     scroll.appendChild(box);
     return;
