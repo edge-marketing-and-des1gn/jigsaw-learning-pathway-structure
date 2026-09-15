@@ -894,13 +894,14 @@ function renderChart(){
   const H = PAD_T * 2 + slot * ROW_H;
 
   // Everything above is laid out in natural units; zoom only scales what
-  // gets drawn, via the viewBox. Left to itself the chart grows to fill
-  // the width it has, so a two- or three-column diagram uses the whole
-  // panel instead of sitting small in a band of empty space. It never
-  // shrinks on its own — a wide tree is better panned than squinted at —
-  // and stops at 180%, past which the type is larger than it is useful.
+  // gets drawn, via the viewBox. Left to itself the chart opens close in
+  // — at DEFAULT_ZOOM — and grows further if a narrow diagram would
+  // otherwise sit in a band of empty space. It never shrinks on its own:
+  // a wide tree is better panned than squinted at, which is what the
+  // drag-to-pan hand is for. The − and + buttons override all of this
+  // until the middle button hands sizing back.
   const zoom = state.zoom === null
-    ? Math.max(1, Math.min(1.8, avail / W))
+    ? Math.max(DEFAULT_ZOOM, Math.min(AUTO_ZOOM_MAX, avail / W))
     : state.zoom;
   state.lastZoom = zoom;
   updateZoomLabel();
@@ -1060,14 +1061,20 @@ document.getElementById('collapseAll').addEventListener('click', () => {
 /* ---------------------------------------------------------
    CHART SIZE — the middle button hands sizing back to the chart.
 --------------------------------------------------------- */
-const ZOOM_MIN = 0.6, ZOOM_MAX = 2.5, ZOOM_STEP = 0.1;
+// How close the chart sits when it's left to size itself. 1 is the
+// natural drawing size; DEFAULT_ZOOM is the floor it opens at, so the
+// labels and ribbons read comfortably without anyone reaching for +.
+// Raise it for a closer look, lower it to fit more on screen at once.
+const DEFAULT_ZOOM = 1.35;
+const AUTO_ZOOM_MAX = 2;
+const ZOOM_MIN = 0.6, ZOOM_MAX = 3, ZOOM_STEP = 0.1;
 function updateZoomLabel(){
   const btn = document.getElementById('zoomFit');
   if (!btn) return;
   btn.textContent = Math.round(state.lastZoom * 100) + '%';
   btn.title = state.zoom === null
-    ? 'Sized to fit the space — use − and + to override'
-    : 'Back to the size that fits the space';
+    ? 'Sizing itself — use − and + to override'
+    : 'Back to the default size';
 }
 function nudgeZoom(dir){
   const next = Math.round((state.lastZoom + dir * ZOOM_STEP) * 100) / 100;
