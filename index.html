@@ -643,8 +643,8 @@ const state = {
   totalSessions: null,
   channelTotals: null,
   live: false,                      // has a real payload ever landed?
-  period: { mode: 'month', value: 1 },
-  channel: 'all',
+  period: { mode: 'range', value: 12 },
+  channel: 'organic',
   view: 'pathway',
   zoom: null,                       // null = size itself to the space available
   lastZoom: 1,
@@ -1520,10 +1520,10 @@ window.addEventListener('resize', () => {
 const LIVE_DATA_URL = "https://script.google.com/macros/s/AKfycbxPK1sppCeKdKfi13Y9R6MSBQkfMAXi0Ht9NmRgXvuqxYl7IMTBg4-U38Qh1Ks9srwn/exec";
 
 const PERIODS = [
+  { mode: 'range', value: 12 },
   { mode: 'month', value: 1 },
   { mode: 'month', value: 0 },
   { mode: 'range', value: 6 },
-  { mode: 'range', value: 12 },
 ];
 const CHANNELS = ['all', 'organic', 'paid'];
 
@@ -1812,7 +1812,11 @@ document.querySelectorAll('.channel-btn').forEach(btn => {
 
 setView('pathway');
 renderChannelCounts();
-load({ mode: 'month', value: 1 }, 'all'); // last month: a new month has little data in its first days
+// Opens on organic traffic over the last twelve months — the widest view
+// of the traffic the site is actually earning. Every other period and
+// traffic type is one click away, and being fetched in the background
+// while this one is read.
+load({ mode: 'range', value: 12 }, 'organic');
 </script>
 </body>
 </html>
