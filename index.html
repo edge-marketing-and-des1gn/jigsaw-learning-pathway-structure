@@ -182,14 +182,19 @@
   /* ---------- key events: what the converting sessions did ---------- */
   .keys{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:start;gap:0 8px;margin:18px 0 0;}
   .keys:empty{display:none;}
-  .key-chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 15px 0 13px;border:1px solid var(--key-rule);
-    border-radius:999px;background:var(--key-wash);color:var(--key-ink);font-size:13.5px;font-weight:500;line-height:1;
-    cursor:pointer;white-space:nowrap;transition:background .12s ease,border-color .12s ease,color .12s ease;}
-  .key-chip:hover{border-color:var(--key);}
-  .key-chip .star{color:var(--key);font-size:12px;}
-  .key-chip .kn{font-size:12px;font-stretch:90%;font-variant-numeric:tabular-nums;color:var(--key-ink);opacity:.8;}
-  .key-chip.on{background:var(--key-ink);border-color:var(--key-ink);color:#fff;}
-  .key-chip.on .star,.key-chip.on .kn{color:#fff;opacity:.85;}
+  .keys[hidden]{display:none;}
+  .chip.key-toggle{border-color:var(--key-rule);background:var(--key-wash);color:var(--key-ink);padding-right:13px;}
+  .chip.key-toggle:hover{border-color:var(--key);background:var(--key-wash);color:var(--key-ink);}
+  .chip.key-toggle[aria-expanded=true]{border-color:var(--key);}
+  .key-toggle .star{color:var(--key);font-size:12px;}
+  .key-toggle .kn{font-size:12px;font-stretch:90%;font-variant-numeric:tabular-nums;color:var(--key-ink);opacity:.8;}
+  .key-toggle::after{content:"";width:6px;height:6px;margin:-3px 0 0 1px;border-right:1.5px solid currentColor;
+    border-bottom:1.5px solid currentColor;transform:rotate(45deg);transition:transform .14s ease,margin .14s ease;}
+  .key-toggle[aria-expanded=true]::after{transform:rotate(225deg);margin-top:3px;}
+  .chip.key-toggle.on{background:var(--key-ink);border-color:var(--key-ink);color:#fff;}
+  .chip.key-toggle.on .star,.chip.key-toggle.on .kn{color:#fff;opacity:.85;}
+  .key-pop .loc-pick .star{flex:none;color:var(--key);font-size:11px;}
+  .key-pop .loc-row{padding-right:0;}
   .key-note{margin:0;font-size:13px;color:var(--ink-3);line-height:1.45;padding:8px 0;}
 
   /* ---------- panels ---------- */
@@ -495,7 +500,19 @@
   <div class="stats" id="stats"></div>
   <!-- Which key events the sessions above reached. Each one opens the
        Events view on the pages it happened on. -->
-  <div class="keys" id="keyStrip" aria-label="Key events"></div>
+  <div class="keys" id="keyStrip" hidden>
+    <span class="filter-label" id="keyLabel">Key events</span>
+    <div class="filter-ctrl">
+      <button class="chip key-toggle" id="keyMore" type="button" aria-haspopup="dialog" aria-controls="keyPop" aria-expanded="false" aria-describedby="keyLabel"></button>
+      <button class="chip-pin" id="keyClear" type="button" hidden>Show all key events</button>
+      <p class="key-note" id="keyNote" hidden></p>
+      <div class="loc-pop key-pop" id="keyPop" role="dialog" aria-label="Key events" hidden>
+        <input class="picker-search" id="keySearch" type="search" placeholder="Find a key event…" aria-label="Find a key event">
+        <div class="loc-list" id="keyList"></div>
+        <p class="loc-foot">Sessions that fired each key event at least once, busiest first. Pick one and every ★ on the chart counts only that key event.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ PATHWAY ============ -->
   <div class="panel" id="pathwayPanel">
@@ -940,6 +957,7 @@ const state = {
   pageSessions: null,
   eventsError: null,
   keyEvents: null,          // sessions that reached a key event, and which ones (from the feed)
+  keyFocus: null,           // one key event picked in the Key events dropdown, or null for all of them
   keyEventsError: null,
   keyByPage: new Map(),     // page -> key events that fire on it (from the events table)
   periodLabel: '',
@@ -984,11 +1002,32 @@ const rootLabel = () => {
    · per page further along: which key events fire on that page, from
      the events table. That's the page as a whole in this view, not
      one journey through it, so it gets a ★ but no number. */
+// What the chart counts: every key event, or only the one picked in the
+// Key events dropdown. `list` is that place's key events, each with its
+// own sessions, so a picked one can be read straight off it.
+function focusOf(x, list){
+  if (!state.keyFocus) return { sessions: x.sessions, count: x.count, events: list || [] };
+  const e = (list || []).find(y => y.event === state.keyFocus);
+  return e ? { sessions: e.sessions, count: e.count, events: [e] } : null;
+}
 function landingKey(name){
   const k = state.keyEvents;
   const x = k && k.byLanding && k.byLanding[name];
-  return x && (x.sessions || x.count) ? x : null;
+  return x && (x.sessions || x.count) ? focusOf(x, x.events) : null;
 }
+function rootKey(){
+  const k = state.keyEvents;
+  if (!k) return null;
+  return focusOf(k, k.byEvent) || { sessions: 0, count: 0, events: [] };
+}
+function pageKeysFor(page){
+  const list = state.keyByPage.get(page);
+  if (!list) return null;
+  const shown = state.keyFocus ? list.filter(r => r.event === state.keyFocus) : list;
+  return shown.length ? shown : null;
+}
+// "a key event", or the picked one's name, as it reads after "reached".
+function keyWord(){ return state.keyFocus ? humanizeEventName(state.keyFocus) : 'a key event'; }
 function keySessionsForEvent(event){
   const k = state.keyEvents;
   const e = k && k.byEvent && k.byEvent.find(x => x.event === event);
@@ -1196,10 +1235,10 @@ function renderStats(){
 
   const stats = [];
   // How many of those sessions reached a key event.
-  const ke = state.keyEvents;
+  const ke = rootKey();
   if (ke){
     stats.push({ n: '<span class="star" aria-hidden="true">★</span>' + fmt(ke.sessions),
-                 l: 'reached a key event (' + share(ke.sessions, total) + ')' });
+                 l: 'reached ' + keyWord() + ' (' + share(ke.sessions, total) + ')' });
   }
   // What share of the traffic from this place this traffic type is.
   const ct = state.channelTotals;
@@ -1221,70 +1260,141 @@ function renderStats(){
   renderKeyStrip();
 }
 
-// The row under the stats: each key event the sessions in view reached,
-// with how many sessions reached it. Clicking one opens the Events view
-// on the pages it happened on; clicking it again lets go.
-function keyFilterOn(event){
-  return state.view === 'events' && state.evTypes.size === 1 && state.evTypes.has(event);
+// The row under the stats: one button that opens a list of every key
+// event the sessions in view reached, with how many sessions reached
+// each. Picking one opens the Events view on the pages it happened on;
+// the button then shows that key event, and "Show every event" lets go.
+let keyQuery = '';
+function keyFilterOn(event){ return state.keyFocus === event; }
+// Picking a key event keeps you where you are. On the Pathway, every ★
+// and ☆ then counts only that key event; on Events, the table narrows
+// to it as well.
+function pickKeyEvent(event){
+  toggleKeyPop(false);
+  state.keyFocus = event;
+  if (state.view === 'events'){
+    state.evTypes = new Set([event]);
+    state.evKeyOnly = false;
+    state.evSearch = '';
+    const box = document.getElementById('evSearch');
+    if (box) box.value = '';
+    state.evOpen.clear();
+  }
+  renderCurrent();
+}
+function clearKeyFocus(){
+  toggleKeyPop(false);
+  if (state.keyFocus && state.evTypes.size === 1 && state.evTypes.has(state.keyFocus)) state.evTypes.clear();
+  state.keyFocus = null;
+  renderCurrent();
+}
+function toggleKeyPop(force){
+  const pop = document.getElementById('keyPop');
+  const open = force === undefined ? pop.hidden : !!force;
+  if (open === !pop.hidden) return;
+  pop.hidden = !open;
+  document.getElementById('keyMore').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open){
+    renderKeyList();
+    const box = document.getElementById('keySearch');
+    if (box && window.matchMedia('(hover:hover)').matches) box.focus();
+  }
 }
 function renderKeyStrip(){
   const wrap = document.getElementById('keyStrip');
-  wrap.innerHTML = '';
-  if (!state.viewKey) return;
+  const btn = document.getElementById('keyMore');
+  const clear = document.getElementById('keyClear');
+  const note = document.getElementById('keyNote');
+  if (!state.viewKey){ wrap.hidden = true; toggleKeyPop(false); return; }
+  wrap.hidden = false;
   const ke = state.keyEvents;
 
-  const label = document.createElement('span');
-  label.className = 'filter-label';
-  label.textContent = 'Key events';
-  const ctrl = document.createElement('div');
-  ctrl.className = 'filter-ctrl';
-  wrap.appendChild(label);
-  wrap.appendChild(ctrl);
-
-  const note = text => {
-    const p = document.createElement('p');
-    p.className = 'key-note';
-    p.textContent = text;
-    ctrl.appendChild(p);
+  const say = text => {
+    btn.hidden = true; clear.hidden = true;
+    note.hidden = false; note.textContent = text;
+    toggleKeyPop(false);
   };
   if (!ke){
-    note('Key events didn\u2019t load: ' + (state.keyEventsError || 'the feed didn\u2019t send them') + '.');
+    say('Key events didn\u2019t load: ' + (state.keyEventsError || 'the feed didn\u2019t send them') + '.');
     return;
   }
   if (!ke.byEvent || !ke.byEvent.length){
-    note('None of these ' + scopePhrase(state.channel, state.loc) + ' reached a key event in this period.');
+    say('None of these ' + scopePhrase(state.channel, state.loc) + ' reached a key event in this period.');
     return;
   }
+  note.hidden = true;
+  btn.hidden = false;
 
-  const chips = document.createElement('div');
-  chips.className = 'chips';
-  ke.byEvent.forEach(e => {
-    const on = keyFilterOn(e.event);
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'key-chip' + (on ? ' on' : '');
-    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    btn.title = fmt(e.sessions) + (e.sessions === 1 ? ' session' : ' sessions') + ' fired ' + humanizeEventName(e.event) +
-      ', ' + fmt(e.count) + (e.count === 1 ? ' time' : ' times') + ' in all. ' +
-      (on ? 'Click to show every event again.' : 'Click to see the pages it happened on.');
-    btn.innerHTML = '<span class="star" aria-hidden="true">★</span>' +
-      `<span>${escapeHtml(humanizeEventName(e.event))}</span>` +
-      `<span class="kn">${fmt(e.sessions)} ${e.sessions === 1 ? 'session' : 'sessions'}</span>`;
-    btn.addEventListener('click', () => {
-      if (on){ clearEventFilters(); return; }
-      state.evTypes = new Set([e.event]);
-      state.evKeyOnly = false;
-      state.evSearch = '';
-      const box = document.getElementById('evSearch');
-      if (box) box.value = '';
-      state.evGroup = 'page';
-      state.evOpen.clear();
-      setView('events');
-    });
-    chips.appendChild(btn);
-  });
-  ctrl.appendChild(chips);
+  const picked = ke.byEvent.find(e => keyFilterOn(e.event)) || null;
+  const kinds = ke.byEvent.length;
+  btn.classList.toggle('on', !!picked);
+  btn.innerHTML = picked
+    ? '<span class="star" aria-hidden="true">★</span>' +
+      `<span>${escapeHtml(humanizeEventName(picked.event))}</span>` +
+      `<span class="kn">${fmt(picked.sessions)} ${picked.sessions === 1 ? 'session' : 'sessions'}</span>`
+    : '<span class="star" aria-hidden="true">★</span>' +
+      `<span>${kinds === 1 ? '1 key event' : 'All ' + fmt(kinds) + ' key events'}</span>` +
+      `<span class="kn">${fmt(ke.sessions)} ${ke.sessions === 1 ? 'session' : 'sessions'} reached one</span>`;
+  btn.title = picked
+    ? 'The ★ counts show only ' + humanizeEventName(picked.event) + '. Click to pick a different key event.'
+    : 'See every key event and how many sessions reached it';
+  clear.hidden = !picked;
+  renderKeyList();
 }
+function renderKeyList(){
+  const pop = document.getElementById('keyPop');
+  const list = document.getElementById('keyList');
+  if (pop.hidden) return;
+  const ke = state.keyEvents;
+  list.innerHTML = '';
+  if (!ke || !ke.byEvent) return;
+  const q = keyQuery.trim().toLowerCase();
+  const rows = ke.byEvent.filter(e => !q ||
+    humanizeEventName(e.event).toLowerCase().includes(q) || e.event.toLowerCase().includes(q));
+  if (!rows.length){
+    const p = document.createElement('p');
+    p.className = 'loc-note';
+    p.textContent = 'No key event matches that.';
+    list.appendChild(p);
+    return;
+  }
+  rows.forEach(e => {
+    const on = keyFilterOn(e.event);
+    const row = document.createElement('div');
+    row.className = 'loc-row' + (on ? ' is-on' : '');
+    const pick = document.createElement('button');
+    pick.type = 'button';
+    pick.className = 'loc-pick';
+    pick.setAttribute('aria-pressed', on ? 'true' : 'false');
+    pick.title = fmt(e.sessions) + (e.sessions === 1 ? ' session' : ' sessions') + ' fired ' + humanizeEventName(e.event) +
+      ', ' + fmt(e.count) + (e.count === 1 ? ' time' : ' times') + ' in all. ' +
+      (on ? 'Click to count every key event again.' : 'Click to count only this key event.');
+    pick.innerHTML = '<span class="star" aria-hidden="true">★</span>' +
+      `<span class="nm">${escapeHtml(humanizeEventName(e.event))}</span>` +
+      `<span class="c">${fmt(e.sessions)} ${e.sessions === 1 ? 'session' : 'sessions'}</span>`;
+    pick.addEventListener('click', () => {
+      if (on) clearKeyFocus();
+      else pickKeyEvent(e.event);
+    });
+    row.appendChild(pick);
+    list.appendChild(row);
+  });
+}
+
+(function setUpKeyPop(){
+  const pop = document.getElementById('keyPop');
+  const btn = document.getElementById('keyMore');
+  pop.addEventListener('click', e => e.stopPropagation());
+  btn.addEventListener('click', e => { e.stopPropagation(); toggleLocBrowser(false); toggleKeyPop(); });
+  document.getElementById('keyClear').addEventListener('click', clearKeyFocus);
+  document.addEventListener('click', () => toggleKeyPop(false));
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || pop.hidden) return;
+    toggleKeyPop(false);
+    btn.focus();
+  });
+  document.getElementById('keySearch').addEventListener('input', e => { keyQuery = e.target.value; renderKeyList(); });
+})();
 
 function renderChannelCounts(){
   const ct = state.channelTotals;
@@ -1372,7 +1482,7 @@ function renderLocations(){
   if (lt){
     more.title = lt.countries.length + (lt.countries.length === 1 ? ' country' : ' countries') + ' sent ' + traffic + 'sessions in this period';
   }
-  more.addEventListener('click', e => { e.stopPropagation(); toggleLocBrowser(); });
+  more.addEventListener('click', e => { e.stopPropagation(); toggleKeyPop(false); toggleLocBrowser(); });
   wrap.appendChild(more);
 }
 
@@ -1563,9 +1673,9 @@ function renderPicker(){
     label.title = friendly(c.name) + ' — ' + fmt(c.value) + ' sessions started here (' +
       ((c.value / total) * 100).toFixed(1) + '% of the sessions in view)' +
       (ki && ki.sessions
-        ? '. ' + fmt(ki.sessions) + ' reached a key event (' + share(ki.sessions, c.value) + '): ' +
-          ki.events.map(e => humanizeEventName(e.event) + ' ' + fmt(e.sessions)).join(', ')
-        : state.keyEvents ? '. None reached a key event.' : '');
+        ? '. ' + fmt(ki.sessions) + ' reached ' + keyWord() + ' (' + share(ki.sessions, c.value) + ')' +
+          (state.keyFocus ? '' : ': ' + ki.events.map(e => humanizeEventName(e.event) + ' ' + fmt(e.sessions)).join(', '))
+        : state.keyEvents ? '. None reached ' + keyWord() + '.' : '');
     label.querySelector('input').addEventListener('change', e => toggleStart(c.name, e.target.checked));
     list.appendChild(label);
   });
@@ -1592,7 +1702,7 @@ function renderPicker(){
     const note = document.createElement('p');
     note.className = 'picker-note';
     note.textContent = fmt(rollup) + ' sessions started on pages too small to list on their own, or that Google Analytics couldn\'t give a starting page.' +
-      (ko && ko.sessions ? ' ' + fmt(ko.sessions) + ' of them reached a key event.' : '');
+      (ko && ko.sessions ? ' ' + fmt(ko.sessions) + ' of them reached ' + keyWord() + '.' : '');
     list.appendChild(note);
   }
 }
@@ -1799,8 +1909,8 @@ function renderChart(){
     // branch reached a key event.
     const startNode = v.depth >= 1 ? chain[1] : null;
     const startKey = startNode ? landingKey(startNode.name) : null;
-    const keyInfo = v.depth === 0 ? state.keyEvents : v.depth === 1 ? startKey : null;
-    const pageKeys = v.depth >= 2 && startKey && startKey.sessions ? (state.keyByPage.get(v.name) || null) : null;
+    const keyInfo = v.depth === 0 ? rootKey() : v.depth === 1 ? startKey : null;
+    const pageKeys = v.depth >= 2 && startKey && startKey.sessions ? pageKeysFor(v.name) : null;
     const keyText = keyInfo && keyInfo.sessions ? '★' + fmt(keyInfo.sessions) : pageKeys ? '☆' : '';
 
     const labelX = x + BAR_W + 8;
@@ -1857,15 +1967,15 @@ function renderChart(){
       const startName = startNode ? friendly(startNode.name) : '';
       if (v.depth <= 1 && state.keyEvents){
         keyHtml = keyInfo && keyInfo.sessions
-          ? `<div class="t-key"><span class="star">★</span> <span class="t-val">${fmt(keyInfo.sessions)}</span> of these ${fmt(v.value)} sessions reached a key event (${share(keyInfo.sessions, v.value)})</div>` +
-            (keyInfo.events && keyInfo.events.length ? keyRows(keyInfo.events) : '') +
+          ? `<div class="t-key"><span class="star">★</span> <span class="t-val">${fmt(keyInfo.sessions)}</span> of these ${fmt(v.value)} sessions reached ${escapeHtml(keyWord())} (${share(keyInfo.sessions, v.value)})</div>` +
+            (!state.keyFocus && keyInfo.events && keyInfo.events.length ? keyRows(keyInfo.events) : '') +
             `<div class="t-kmore">${v.depth === 0
               ? 'Each starting page shows its share of these as ★.'
               : 'Counted anywhere in the visit, so it includes any ☆ pages further along this branch.'}</div>`
-          : '<div class="t-key dim">None of these sessions reached a key event</div>';
+          : `<div class="t-key dim">None of these sessions reached ${escapeHtml(keyWord())}</div>`;
       } else if (pageKeys){
-        keyHtml = `<div class="t-key"><span class="star">☆</span> Key events happen on this page</div>` +
-          `<div class="t-kmore">Not extra: anyone on this path who did one is already in ${escapeHtml(startName)}’s ★${fmt(startKey.sessions)}. ` +
+        keyHtml = `<div class="t-key"><span class="star">☆</span> ${state.keyFocus ? escapeHtml(keyWord()) + ' happens' : 'Key events happen'} on this page</div>` +
+          `<div class="t-kmore">Not extra: anyone on this path who did ${state.keyFocus ? 'it' : 'one'} is already in ${escapeHtml(startName)}’s ★${fmt(startKey.sessions)}. ` +
           `Across the whole report, on this page:</div>` + keyRows(pageKeys);
       }
 
@@ -2571,6 +2681,7 @@ function applyData(d, key){
   state.eventsError = d.eventsError || null;
   state.pageSessions = d.pageSessions || null;
   state.keyEvents = d.keyEvents || null;
+  if (state.keyFocus && !(state.keyEvents && state.keyEvents.byEvent.some(e => e.event === state.keyFocus))) state.keyFocus = null;
   state.keyEventsError = d.keyEventsError || null;
   state.channelTotals = d.channelTotals || null;
   state.channelGroups = d.channelGroups || null;
