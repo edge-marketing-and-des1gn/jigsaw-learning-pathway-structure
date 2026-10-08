@@ -11,7 +11,8 @@
   /* ==========================================================
      DESIGN TOKENS
      The interface is ink on white. Colour is kept for the data:
-     the five page groups in the chart, and nothing else.
+     the five page groups in the chart, the gold of key events,
+     and nothing else.
      One typeface (Archivo) at three widths — wide for headings
      and readouts, normal for reading, narrow for dense numbers.
   ========================================================== */
@@ -33,6 +34,8 @@
     --c-other:#AAB2C0;
     --key:#B7791F;            /* ★ Key Events */
     --key-ink:#855711;
+    --key-wash:#FFF8E6;
+    --key-rule:#F1DCA4;
 
     /* status */
     --good:#0E9F4F;
@@ -173,7 +176,21 @@
   .stat{padding:14px 36px 2px 0;margin-right:36px;border-right:1px solid var(--rule);}
   .stat:last-child{border-right:none;margin-right:0;}
   .stat .n{font-size:23px;font-weight:600;font-stretch:112%;letter-spacing:-.01em;line-height:1.15;font-variant-numeric:tabular-nums;}
+  .stat .n .star{color:var(--key);font-size:.72em;margin-right:5px;vertical-align:.12em;}
   .stat .l{font-size:13px;color:var(--ink-3);margin-top:3px;}
+
+  /* ---------- key events: what the converting sessions did ---------- */
+  .keys{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:start;gap:0 8px;margin:18px 0 0;}
+  .keys:empty{display:none;}
+  .key-chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 15px 0 13px;border:1px solid var(--key-rule);
+    border-radius:999px;background:var(--key-wash);color:var(--key-ink);font-size:13.5px;font-weight:500;line-height:1;
+    cursor:pointer;white-space:nowrap;transition:background .12s ease,border-color .12s ease,color .12s ease;}
+  .key-chip:hover{border-color:var(--key);}
+  .key-chip .star{color:var(--key);font-size:12px;}
+  .key-chip .kn{font-size:12px;font-stretch:90%;font-variant-numeric:tabular-nums;color:var(--key-ink);opacity:.8;}
+  .key-chip.on{background:var(--key-ink);border-color:var(--key-ink);color:#fff;}
+  .key-chip.on .star,.key-chip.on .kn{color:#fff;opacity:.85;}
+  .key-note{margin:0;font-size:13px;color:var(--ink-3);line-height:1.45;padding:8px 0;}
 
   /* ---------- panels ---------- */
   .panel{margin-top:22px;background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-panel);
@@ -188,6 +205,7 @@
   .legend-item{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);}
   .swatch{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none;}
   .legend-item.is-how{color:var(--ink-3);padding-left:20px;border-left:1px solid var(--rule);}
+  .legend-item .key-sample{color:var(--key);font-size:11.5px;font-weight:600;font-stretch:90%;font-variant-numeric:tabular-nums;}
   .chip-sample{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
     background:var(--ink);color:#fff;font-size:12px;font-weight:600;line-height:1;flex:none;}
 
@@ -225,6 +243,7 @@
   .pick .bar i{display:block;height:4px;border-radius:2px;}
   .pick .c{font-size:12px;font-stretch:90%;font-weight:500;font-variant-numeric:tabular-nums;color:var(--ink-3);
     flex:none;min-width:34px;text-align:right;}
+  .pick .k{font-size:11.5px;font-stretch:90%;font-weight:600;font-variant-numeric:tabular-nums;color:var(--key);flex:none;}
   .pick .star{color:var(--key);font-size:11px;flex:none;width:8px;text-align:center;}
   .picker-more{width:100%;margin-top:10px;}
   .picker-note{font-size:12.5px;color:var(--ink-3);padding:10px 0 0;line-height:1.45;margin:0;}
@@ -250,6 +269,7 @@
   #chart .n-nm{font-size:12.5px;fill:var(--ink);}
   #chart .n-nm.root{font-size:14px;font-weight:600;}
   #chart .n-val{font-size:11px;font-weight:500;fill:var(--ink-3);font-variant-numeric:tabular-nums;}
+  #chart .n-key{font-size:11px;font-weight:600;fill:var(--key);font-variant-numeric:tabular-nums;pointer-events:none;}
   /* Pages with more journey behind them: a white pill with a + button.
      A solid ink + means there's more to see; an outlined − means the
      next step is already open. */
@@ -341,6 +361,12 @@
   #tooltip .t-meta{color:var(--ink-2);margin-top:4px;}
   #tooltip .t-meta.is-how{color:var(--ink-3);font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid var(--rule);}
   #tooltip .t-val{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  #tooltip .t-key{color:var(--key-ink);margin-top:6px;padding-top:6px;border-top:1px solid var(--rule);}
+  #tooltip .t-key .star{color:var(--key);}
+  #tooltip .t-key.dim{color:var(--ink-3);font-size:12px;}
+  #tooltip .t-krow{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--ink-2);}
+  #tooltip .t-krow b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;}
+  #tooltip .t-kmore{font-size:12px;color:var(--ink-3);}
 
   /* ---------- footer ---------- */
   footer{margin:34px 0 0;padding:0;color:var(--ink-2);font-size:13.5px;line-height:1.65;}
@@ -356,7 +382,7 @@
   @media (max-width:900px){
     .wrap{padding:0 16px;}
     .scope{padding:24px 0 20px;}
-    .filter-row{grid-template-columns:1fr;gap:2px;}
+    .filter-row,.keys{grid-template-columns:1fr;gap:2px;}
     .filter-label{line-height:1.6;}
     .loc-sep{display:none;}
     .loc-pop{width:100%;}
@@ -466,6 +492,9 @@
 
   <p class="notice" id="notice" role="status" hidden></p>
   <div class="stats" id="stats"></div>
+  <!-- Which key events the sessions above reached. Each one opens the
+       Events view on the pages it happened on. -->
+  <div class="keys" id="keyStrip" aria-label="Key events"></div>
 
   <!-- ============ PATHWAY ============ -->
   <div class="panel" id="pathwayPanel">
@@ -489,13 +518,15 @@
       <span class="legend-item"><span class="swatch" style="background:var(--c-company)"></span>Company and events</span>
       <span class="legend-item"><span class="swatch" style="background:var(--c-contact)"></span>Free trial and store</span>
       <span class="legend-item"><span class="swatch" style="background:var(--c-other)"></span>Other pages</span>
+      <span class="legend-item is-how"><span class="key-sample">★12</span>Sessions that started here and reached a key event</span>
+      <span class="legend-item"><span class="key-sample">★</span>A key event happens on this page</span>
       <span class="legend-item is-how"><span class="chip-sample">+</span>Opens the next step, − closes it</span>
     </div>
     <div class="panel-wait" id="waitPathway" role="status" aria-live="polite"><span class="spinner"></span><span id="waitPathwayText">Fetching this period from Google Analytics…</span></div>
     <div class="split">
       <nav class="picker" id="picker" aria-label="Choose starting pages">
         <h3>Pages sessions start on</h3>
-        <p class="note">The busiest ten are on the chart already. Tick any others to add them.</p>
+        <p class="note">The busiest ten are on the chart already. Tick any others to add them. ★ is how many of a page's sessions reached a key event.</p>
         <input class="picker-search" id="pickerSearch" type="search" placeholder="Find a page…" aria-label="Find a page">
         <div class="picker-actions">
           <button class="mini-btn" id="pickTop5" type="button">Top 5</button>
@@ -548,11 +579,12 @@
   </div>
 
   <footer>
-    <p id="footerMain">Counts are sessions — one visit by one person, however many pages they open in it. The figure at the trunk is every session in the period for the traffic and location picked above, and the branches beneath it are the pages those sessions started on. A page marked ↗ opens the live page in a new tab.</p>
+    <p id="footerMain">Counts are sessions — one visit by one person, however many pages they open in it. The figure at the trunk is every session in the period for the traffic and location picked above, and the branches beneath it are the pages those sessions started on. A gold ★ with a number is how many of those sessions reached a key event. A page marked ↗ opens the live page in a new tab.</p>
     <details>
       <summary>How this report is put together</summary>
       <p>Sessions are grouped first by the page they started on, which is why the total matches Google Analytics' own session count rather than only counting homepage arrivals. The step after a starting page is an exact count: sessions that started there and opened that page next. From the third page on, numbers marked ≈ are estimates. Google Analytics' reporting API doesn't hand out full step-by-step sequences (its Path Exploration report isn't available through it), so each deeper step takes the sessions on that branch and applies the share of visitors who moved on from that page to each next one, among sessions that started on the same page. That way each journey thins out step by step the way real visits do, and ends once a step drops below one session.</p>
       <p>A + marks a page with a next step: click it to open that one step, then keep clicking the + on the pages beneath to follow the journey as far as you like. − closes a step and everything opened under it. "Collapse steps" closes them all.</p>
+      <p>Key events are the actions marked as Key Events in Google Analytics (what it used to call conversions), such as a lead form or a free-trial sign-up. "Reached a key event" counts each session once, however many key events it fired, using Google Analytics' session key event rate. Beside each key event is the number of sessions that fired it at least once; hover it for how many times it fired in all. A session that fired two different key events counts under both, so those can add up to more than the overall figure. On the chart, a ★ with a number beside the trunk or a starting page is an exact count of the sessions there that reached a key event, and the starting pages add back up to the trunk. Further along a journey a ★ on its own means a key event happens on that page. That comes from the page as a whole, in the period, traffic and location on screen, rather than from that one journey, which is why it carries no number; hover it to see which key events and how many sessions.</p>
       <p>Traffic types are Google Analytics' own session channel groups, applied at the source: picking one rebuilds the whole report from that traffic rather than filtering a mixed one afterwards. Organic covers organic search, social, video and shopping. Paid covers paid search, social, shopping, video, display and cross-network. Direct is visits with no known source, such as a typed address or a bookmark. Referral is visits from links on other websites. Other is everything Google Analytics files anywhere else — email, affiliates, text messages, and traffic it couldn't classify; hover the Other button to see what is in it. The five add up to All traffic.</p>
       <p>Location is Google Analytics' own country and region for each visitor, worked out from their IP address, and it is applied at the source in the same way: picking a place rebuilds the paths, events and totals from that place's sessions for the period and traffic type on screen. "Browse all locations" lists every country that sent sessions, each opening to its provinces or states; click one to filter by it, or pin it to keep it as a button. The number on each button is its sessions for the period and traffic type on screen. Regions add up to their country, and countries add up to All locations. "Unknown" entries are visitors Google couldn't place. IP-based location is approximate — a VPN, a mobile carrier or a head-office network can put a visitor in the wrong place.</p>
       <p>Addresses that differ only by a tracking code (?utm_…, ?gclid=…), a #section link, http/https, www, a trailing slash or capital letters (/wecollab/free-trial and /wecollab/FREE-trial) are counted as the same page. Smaller paths are grouped into "Other pages" so no branch becomes a wall of tiny entries; it's a group rather than one page, so it isn't linked or expandable.</p>
@@ -669,6 +701,25 @@ const FALLBACK_PAGE_SESSIONS = {
   "/wecollab/FREE-trial": 79, "/publications/courses": 174,
 };
 
+// Sessions that reached a key event, in the same shape the feed sends:
+// the starting pages add up to the total; the key events can add up to
+// a little more, because a session can fire both.
+const FALLBACK_KEY = {
+  sessions: 86, count: 91,
+  byEvent: [
+    { event: 'generate_lead', sessions: 57, count: 59 },
+    { event: 'sign_up', sessions: 31, count: 32 },
+  ],
+  byLanding: {
+    '/wecollab': { sessions: 34, count: 36, events: [{ event: 'sign_up', sessions: 21, count: 21 }, { event: 'generate_lead', sessions: 14, count: 15 }] },
+    '/': { sessions: 18, count: 19, events: [{ event: 'generate_lead', sessions: 11, count: 11 }, { event: 'sign_up', sessions: 7, count: 8 }] },
+    '/wecollab/pricing': { sessions: 12, count: 12, events: [{ event: 'generate_lead', sessions: 12, count: 12 }] },
+    '/collaborative-response-1': { sessions: 9, count: 9, events: [{ event: 'generate_lead', sessions: 9, count: 9 }] },
+    '/publications/courses': { sessions: 6, count: 6, events: [{ event: 'generate_lead', sessions: 6, count: 6 }] },
+    'Others': { sessions: 7, count: 9, events: [{ event: 'generate_lead', sessions: 5, count: 6 }, { event: 'sign_up', sessions: 3, count: 3 }] },
+  }
+};
+
 // The example data is one mixed-traffic month, everywhere. Each traffic
 // type and location scales it to a plausible share so the switches
 // still work, while the banner says plainly that none of it is live.
@@ -699,6 +750,16 @@ function scaleTree(node, f){
   if (node.children) out.children = node.children.map(c => scaleTree(c, f));
   return out;
 }
+function scaleKey(k, f){
+  const s = n => Math.round(n * f);
+  const evs = list => list.map(e => ({ event: e.event, sessions: s(e.sessions), count: s(e.count) })).filter(e => e.count > 0);
+  const byLanding = {};
+  Object.keys(k.byLanding).forEach(p => {
+    const x = k.byLanding[p];
+    if (s(x.count) > 0) byLanding[p] = { sessions: s(x.sessions), count: s(x.count), events: evs(x.events) };
+  });
+  return { sessions: s(k.sessions), count: s(k.count), byEvent: evs(k.byEvent), byLanding: byLanding };
+}
 function fallbackFor(channel, loc){
   const cf = FALLBACK_SHARE[channel] || 1;
   const rf = fallbackLocShare(loc);
@@ -716,6 +777,8 @@ function fallbackFor(channel, loc){
       sessions: r.sessions === null ? null : Math.max(1, Math.round(r.sessions * f))
     })),
     pageSessions: pageSessions,
+    keyEvents: scaleKey(FALLBACK_KEY, f),
+    keyEventsError: null,
     totalSessions: Math.round(base * f),
     channelTotals: channelTotals,
     channelGroups: null,
@@ -809,9 +872,10 @@ function humanizeEventName(name){
   return String(name).split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-// The five page groups. These are the only colours on the page; they
-// match the --c-* tokens in the stylesheet and were checked for
-// colour-blind separation against white. "Other" is a deliberate grey.
+// The five page groups. These are the only colours on the page apart
+// from the gold of key events; they match the --c-* tokens in the
+// stylesheet and were checked for colour-blind separation against
+// white. "Other" is a deliberate grey.
 const COLORS = { root:'#14213D', home:'#2A78D6', product:'#EDA100', company:'#4A3AA7', conversion:'#E34948', other:'#AAB2C0' };
 const KEY_EVENT_COLOR = '#B7791F';   // ★ Key Events
 const EVENT_COLOR = '#9AA5B8';       // every other event
@@ -844,9 +908,10 @@ const tooltip = document.getElementById('tooltip');
 function showTip(html, evt){ tooltip.innerHTML = html; tooltip.classList.add('show'); moveTip(evt); }
 function moveTip(evt){
   const pad = 14;
+  const w = tooltip.offsetWidth || 300, h = tooltip.offsetHeight || 110;
   let x = evt.clientX + pad, y = evt.clientY + pad;
-  if (x + 300 > window.innerWidth) x = evt.clientX - 300 - pad;
-  if (y + 110 > window.innerHeight) y = evt.clientY - 110 - pad;
+  if (x + w > window.innerWidth) x = evt.clientX - w - pad;
+  if (y + h > window.innerHeight) y = Math.max(8, evt.clientY - h - pad);
   tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
 }
 function hideTip(){ tooltip.classList.remove('show'); }
@@ -873,6 +938,9 @@ const state = {
   eventRows: [],
   pageSessions: null,
   eventsError: null,
+  keyEvents: null,          // sessions that reached a key event, and which ones (from the feed)
+  keyEventsError: null,
+  keyByPage: new Map(),     // page -> key events that fire on it (from the events table)
   periodLabel: '',
   viewKey: null,            // which period + traffic + location is on screen, so a refresh of it keeps open rows open
   estFrom: null,            // chart column where counts become estimates; null for example data
@@ -907,6 +975,47 @@ const rootLabel = () => {
   const w = trafficWords(state.channel);
   return w ? w.charAt(0).toUpperCase() + w.slice(1) + 'sessions' : 'All sessions';
 };
+
+/* ---- key events ----
+   Two kinds, kept apart because they mean different things:
+   · per starting page (and the trunk): exact, from the feed — the
+     sessions that started there and reached a key event;
+   · per page further along: which key events fire on that page, from
+     the events table. That's the page as a whole in this view, not
+     one journey through it, so it gets a ★ but no number. */
+function landingKey(name){
+  const k = state.keyEvents;
+  const x = k && k.byLanding && k.byLanding[name];
+  return x && (x.sessions || x.count) ? x : null;
+}
+function keySessionsForEvent(event){
+  const k = state.keyEvents;
+  const e = k && k.byEvent && k.byEvent.find(x => x.event === event);
+  return e ? e.sessions : null;
+}
+function buildKeyByPage(){
+  const map = new Map();
+  (state.eventRows || []).forEach(r => {
+    if (!r.keyEvent) return;
+    if (!map.has(r.page)) map.set(r.page, []);
+    map.get(r.page).push(r);
+  });
+  map.forEach(list => list.sort((a, b) => ((b.sessions || 0) - (a.sessions || 0)) || (b.count - a.count)));
+  state.keyByPage = map;
+}
+// Up to `max` key events as tooltip rows: name on the left, sessions
+// (or times, when sessions aren't known) on the right.
+function keyRows(events, max){
+  const lim = max || 5;
+  const rows = events.slice(0, lim).map(e => {
+    const n = e.sessions !== null && e.sessions !== undefined
+      ? fmt(e.sessions) + (e.sessions === 1 ? ' session' : ' sessions')
+      : fmt(e.count) + (e.count === 1 ? ' time' : ' times');
+    return `<div class="t-krow"><span>${escapeHtml(humanizeEventName(e.event))}</span><b>${n}</b></div>`;
+  }).join('');
+  const more = events.length > lim ? `<div class="t-kmore">and ${events.length - lim} more</div>` : '';
+  return rows + more;
+}
 
 /* ---- locations ----
    A location is one string: 'all', a country ('CA'), or a country and
@@ -1056,7 +1165,7 @@ function buildChainIndex(){
 }
 
 /* =========================================================
-   4. HEADER — stats, traffic switch, location switch
+   4. HEADER — stats, key events, traffic switch, location switch
 ========================================================= */
 function renderStats(){
   const headline = document.getElementById('headline');
@@ -1067,6 +1176,7 @@ function renderStats(){
     headline.textContent = 'Loading sessions…';
     periodLine.textContent = '';
     strip.innerHTML = '';
+    renderKeyStrip();
     return;
   }
 
@@ -1084,6 +1194,12 @@ function renderStats(){
   periodLine.textContent = state.periodLabel || '';
 
   const stats = [];
+  // How many of those sessions reached a key event.
+  const ke = state.keyEvents;
+  if (ke){
+    stats.push({ n: '<span class="star" aria-hidden="true">★</span>' + fmt(ke.sessions),
+                 l: 'reached a key event (' + share(ke.sessions, total) + ')' });
+  }
   // What share of the traffic from this place this traffic type is.
   const ct = state.channelTotals;
   if (state.channel !== 'all' && ct && ct.all){
@@ -1101,6 +1217,72 @@ function renderStats(){
 
   strip.innerHTML =
     stats.map(s => `<div class="stat"><div class="n">${s.n}</div><div class="l">${escapeHtml(s.l)}</div></div>`).join('');
+  renderKeyStrip();
+}
+
+// The row under the stats: each key event the sessions in view reached,
+// with how many sessions reached it. Clicking one opens the Events view
+// on the pages it happened on; clicking it again lets go.
+function keyFilterOn(event){
+  return state.view === 'events' && state.evTypes.size === 1 && state.evTypes.has(event);
+}
+function renderKeyStrip(){
+  const wrap = document.getElementById('keyStrip');
+  wrap.innerHTML = '';
+  if (!state.viewKey) return;
+  const ke = state.keyEvents;
+
+  const label = document.createElement('span');
+  label.className = 'filter-label';
+  label.textContent = 'Key events';
+  const ctrl = document.createElement('div');
+  ctrl.className = 'filter-ctrl';
+  wrap.appendChild(label);
+  wrap.appendChild(ctrl);
+
+  const note = text => {
+    const p = document.createElement('p');
+    p.className = 'key-note';
+    p.textContent = text;
+    ctrl.appendChild(p);
+  };
+  if (!ke){
+    note('Key events didn\u2019t load: ' + (state.keyEventsError || 'the feed didn\u2019t send them') + '.');
+    return;
+  }
+  if (!ke.byEvent || !ke.byEvent.length){
+    note('None of these ' + scopePhrase(state.channel, state.loc) + ' reached a key event in this period.');
+    return;
+  }
+
+  const chips = document.createElement('div');
+  chips.className = 'chips';
+  ke.byEvent.forEach(e => {
+    const on = keyFilterOn(e.event);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'key-chip' + (on ? ' on' : '');
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.title = fmt(e.sessions) + (e.sessions === 1 ? ' session' : ' sessions') + ' fired ' + humanizeEventName(e.event) +
+      ', ' + fmt(e.count) + (e.count === 1 ? ' time' : ' times') + ' in all. ' +
+      (on ? 'Click to show every event again.' : 'Click to see the pages it happened on.');
+    btn.innerHTML = '<span class="star" aria-hidden="true">★</span>' +
+      `<span>${escapeHtml(humanizeEventName(e.event))}</span>` +
+      `<span class="kn">${fmt(e.sessions)} ${e.sessions === 1 ? 'session' : 'sessions'}</span>`;
+    btn.addEventListener('click', () => {
+      if (on){ clearEventFilters(); return; }
+      state.evTypes = new Set([e.event]);
+      state.evKeyOnly = false;
+      state.evSearch = '';
+      const box = document.getElementById('evSearch');
+      if (box) box.value = '';
+      state.evGroup = 'page';
+      state.evOpen.clear();
+      setView('events');
+    });
+    chips.appendChild(btn);
+  });
+  ctrl.appendChild(chips);
 }
 
 function renderChannelCounts(){
@@ -1367,16 +1549,22 @@ function renderPicker(){
 
   rows.forEach(c => {
     const on = state.selected.includes(c.name);
+    const ki = landingKey(c.name);
     const label = document.createElement('label');
     label.className = 'pick' + (on ? ' on' : '');
     label.innerHTML =
       `<input type="checkbox" ${on ? 'checked' : ''}>` +
       `<span class="dot" style="background:${colorFor(c.name)}"></span>` +
       `<span class="nm" title="${escapeHtml(c.name)}">${escapeHtml(friendly(c.name))}</span>` +
+      (ki && ki.sessions ? `<span class="k">★${fmt(ki.sessions)}</span>` : '') +
       `<span class="bar"><i style="width:${Math.max(4, (c.value / biggest) * 100)}%;background:${colorFor(c.name)}"></i></span>` +
       `<span class="c">${fmt(c.value)}</span>`;
     label.title = friendly(c.name) + ' — ' + fmt(c.value) + ' sessions started here (' +
-      ((c.value / total) * 100).toFixed(1) + '% of the sessions in view)';
+      ((c.value / total) * 100).toFixed(1) + '% of the sessions in view)' +
+      (ki && ki.sessions
+        ? '. ' + fmt(ki.sessions) + ' reached a key event (' + share(ki.sessions, c.value) + '): ' +
+          ki.events.map(e => humanizeEventName(e.event) + ' ' + fmt(e.sessions)).join(', ')
+        : state.keyEvents ? '. None reached a key event.' : '');
     label.querySelector('input').addEventListener('change', e => toggleStart(c.name, e.target.checked));
     list.appendChild(label);
   });
@@ -1399,9 +1587,11 @@ function renderPicker(){
 
   const rollup = rolledUpTotal();
   if (rollup && !q){
+    const ko = landingKey('Others');
     const note = document.createElement('p');
     note.className = 'picker-note';
-    note.textContent = fmt(rollup) + ' sessions started on pages too small to list on their own, or that Google Analytics couldn\'t give a starting page.';
+    note.textContent = fmt(rollup) + ' sessions started on pages too small to list on their own, or that Google Analytics couldn\'t give a starting page.' +
+      (ko && ko.sessions ? ' ' + fmt(ko.sessions) + ' of them reached a key event.' : '');
     list.appendChild(note);
   }
 }
@@ -1598,16 +1788,26 @@ function renderChart(){
       g.setAttribute('aria-label', friendly(v.name) + ', ' + fmt(v.value) + ' sessions. ' +
         (open ? 'Close the next step.' : 'Open the next step.'));
     }
+
+    // Key events. The trunk and the starting pages carry an exact count
+    // of sessions that reached one; further along, a lone ★ marks a page
+    // where a key event happens.
+    const keyInfo = v.depth === 0 ? state.keyEvents : v.depth === 1 ? landingKey(v.name) : null;
+    const pageKeys = v.depth >= 2 ? (state.keyByPage.get(v.name) || null) : null;
+    const keyText = keyInfo && keyInfo.sessions ? '★' + fmt(keyInfo.sessions) : pageKeys ? '★' : '';
+
     const labelX = x + BAR_W + 8;
     const nameX = labelX + (canOpen ? 22 : 0);
     const valText = (v.depth > 0 && isEstimate(v.depth) ? '≈' : '') + fmt(v.value) + (v.depth === 0 ? ' sessions' : '');
     const valFont = '500 11px Archivo, system-ui, sans-serif';
     const valW = textWidth(valText, valFont);
+    const keyFont = '600 11px Archivo, system-ui, sans-serif';
+    const keyW = keyText ? textWidth(keyText, keyFont) + 7 : 0;
     const kUrl = urlFor(v.name);
     const extW = kUrl ? 14 : 0;
     const rightEdge = x + COL_W - 10;
     const nameFont = v.depth === 0 ? '600 14px Archivo, system-ui, sans-serif' : '500 12.5px Archivo, system-ui, sans-serif';
-    const nameMax = Math.max(46, rightEdge - nameX - valW - extW - 12);
+    const nameMax = Math.max(46, rightEdge - nameX - valW - keyW - extW - 12);
 
     if (canOpen){
       g.appendChild(el('rect', { class: 'chip-bg', x: labelX - 3, y: v.y - 11, width: Math.max(40, rightEdge + 5 - (labelX - 3)), height: 22, rx: 11 }));
@@ -1617,6 +1817,11 @@ function renderChart(){
     g.appendChild(el('text', {
       class: 'n-nm' + (v.depth === 0 ? ' root' : ''), x: nameX, y: v.y, 'dominant-baseline': 'middle'
     }, fit(v.depth === 0 ? rootLabel() : friendly(v.name), nameFont, nameMax)));
+    if (keyText){
+      g.appendChild(el('text', {
+        class: 'n-key', x: rightEdge - extW - valW - 7, y: v.y, 'dominant-baseline': 'middle', 'text-anchor': 'end'
+      }, keyText));
+    }
     g.appendChild(el('text', {
       class: 'n-val', x: rightEdge - extW, y: v.y, 'dominant-baseline': 'middle', 'text-anchor': 'end'
     }, valText));
@@ -1640,12 +1845,24 @@ function renderChart(){
             : 'Click + to open the next step (' + nextCount + (nextCount === 1 ? ' page' : ' pages') + ')'}</div>`
         : UNLINKABLE.has(v.name) ? '<div class="t-meta is-how">A group of smaller pages, not one single page</div>'
         : '<div class="t-meta is-how">No onward pages traced from here</div>';
+
+      let keyHtml = '';
+      if (v.depth <= 1 && state.keyEvents){
+        keyHtml = keyInfo && keyInfo.sessions
+          ? `<div class="t-key"><span class="star">★</span> <span class="t-val">${fmt(keyInfo.sessions)}</span> of these sessions reached a key event (${share(keyInfo.sessions, v.value)})</div>` +
+            (keyInfo.events && keyInfo.events.length ? keyRows(keyInfo.events) : '')
+          : '<div class="t-key dim">None of these sessions reached a key event</div>';
+      } else if (pageKeys){
+        keyHtml = '<div class="t-key"><span class="star">★</span> Key events on this page, across every journey</div>' + keyRows(pageKeys);
+      }
+
       showTip(
         `<div class="t-path">${v.depth === 0 ? rootLabel() : escapeHtml(friendly(v.name))}</div>` +
         (v.depth === 0 && !sameLoc(state.loc, 'all') ? `<div class="t-sub">${escapeHtml(locLabel(state.loc))} only</div>` : '') +
         (UNLINKABLE.has(v.name) ? '' : `<div class="t-sub">${escapeHtml(v.name)}</div>`) +
         `<div class="t-meta"><span class="t-val">${v.depth > 0 && isEstimate(v.depth) ? '≈' : ''}${fmt(v.value)}</span> sessions${pct ? ', ' + pct : ''}</div>` +
-        (v.depth > 0 && isEstimate(v.depth) ? '<div class="t-meta" style="font-size:12px;">Estimated from the step before</div>' : '') + action, e);
+        (v.depth > 0 && isEstimate(v.depth) ? '<div class="t-meta" style="font-size:12px;">Estimated from the step before</div>' : '') +
+        keyHtml + action, e);
     });
     g.addEventListener('mouseleave', () => { clearHighlight(); hideTip(); });
     if (canOpen){
@@ -1868,10 +2085,12 @@ function renderEventFilters(){
       wrap.appendChild(h);
     }
     const on = state.evTypes.has(name);
+    const ks = t.keyEvent ? keySessionsForEvent(name) : null;
     const label = document.createElement('label');
     label.className = 'pick' + (on ? ' on' : '');
     label.title = humanizeEventName(name) + ' — ' + fmt(t.count) + ' times across ' +
-      t.pages.size + (t.pages.size === 1 ? ' page' : ' pages');
+      t.pages.size + (t.pages.size === 1 ? ' page' : ' pages') +
+      (ks !== null ? ', in ' + fmt(ks) + (ks === 1 ? ' session' : ' sessions') : '');
     label.innerHTML =
       `<input type="checkbox" ${on ? 'checked' : ''}>` +
       (t.keyEvent ? '<span class="star">★</span>' : '<span class="dot" style="background:' + EVENT_COLOR + '"></span>') +
@@ -1907,21 +2126,31 @@ function groupByPage(rows){
   }));
 }
 function groupByEvent(rows){
+  // How many pages each event has in the whole table, so a search that
+  // hides some of its pages doesn't still show its site-wide sessions.
+  const allPages = new Map();
+  (state.eventRows || []).forEach(r => allPages.set(r.event, (allPages.get(r.event) || 0) + 1));
   const map = new Map();
   rows.forEach(r => {
     if (!map.has(r.event)) map.set(r.event, []);
     map.get(r.event).push(r);
   });
-  return [...map.entries()].map(([event, pgs]) => ({
-    id: 'event:' + event,
-    event,
-    title: humanizeEventName(event),
-    keyEvent: pgs.some(p => p.keyEvent),
-    pages: pgs.length,
-    count: pgs.reduce((s, p) => s + p.count, 0),
-    keyCount: pgs.filter(p => p.keyEvent).reduce((s, p) => s + p.count, 0),
-    children: pgs.slice().sort((a, b) => b.count - a.count),
-  }));
+  return [...map.entries()].map(([event, pgs]) => {
+    const keyEvent = pgs.some(p => p.keyEvent);
+    return {
+      id: 'event:' + event,
+      event,
+      title: humanizeEventName(event),
+      keyEvent,
+      pages: pgs.length,
+      // Sessions that fired this key event, each counted once — exact,
+      // from the feed. Only for key events, and only when every page is shown.
+      sessions: keyEvent && pgs.length === allPages.get(event) ? keySessionsForEvent(event) : null,
+      count: pgs.reduce((s, p) => s + p.count, 0),
+      keyCount: pgs.filter(p => p.keyEvent).reduce((s, p) => s + p.count, 0),
+      children: pgs.slice().sort((a, b) => b.count - a.count),
+    };
+  });
 }
 
 function sortGroups(groups){
@@ -1938,6 +2167,7 @@ function sortGroups(groups){
 }
 
 function renderEvents(){
+  renderKeyStrip();
   renderEventFilters();
   const wrap = document.getElementById('evTableWrap');
   const summary = document.getElementById('evSummary');
@@ -1978,7 +2208,7 @@ function renderEvents(){
 
   const groups = sortGroups(byPage ? groupByPage(rows) : groupByEvent(rows));
   const maxCount = Math.max(...groups.map(g => g.count), 1);
-  const showSessions = byPage && groups.some(g => g.sessions !== null);
+  const showSessions = groups.some(g => g.sessions !== null && g.sessions !== undefined);
   const showKey = byPage && groups.some(g => g.keyCount > 0);
 
   const arrow = k => state.evSort.key === k ? `<span class="arrow">${state.evSort.dir === -1 ? '↓' : '↑'}</span>` : '';
@@ -1997,6 +2227,7 @@ function renderEvents(){
     : `<thead><tr>
          <th data-sort="name">Event ${arrow('name')}</th>
          <th data-sort="pages" style="text-align:right">Pages ${arrow('pages')}</th>
+         ${showSessions ? `<th data-sort="sessions" style="text-align:right" title="Sessions that fired this key event at least once, each counted once">Sessions ${arrow('sessions')}</th>` : ''}
          <th data-sort="count" style="text-align:right">Times ${arrow('count')}</th>
          <th class="barcell"></th>
          <th></th>
@@ -2039,6 +2270,7 @@ function renderEvents(){
           `<span class="dot" style="background:${g.keyEvent ? KEY_EVENT_COLOR : EVENT_COLOR}"></span>` +
           `<span style="min-width:0"><span class="nm">${escapeHtml(g.title)}${g.keyEvent ? '<span class="keystar">★ Key event</span>' : ''}</span></span></span></td>` +
         `<td class="num">${fmt(g.pages)}</td>` +
+        (showSessions ? `<td class="num">${g.sessions === null ? '—' : fmt(g.sessions)}</td>` : '') +
         `<td class="num lead">${fmt(g.count)}</td>` +
         bar(g.count, g.keyEvent ? KEY_EVENT_COLOR : EVENT_COLOR) +
         `<td></td>`;
@@ -2075,6 +2307,7 @@ function renderEvents(){
           `<td class="child-cell"><span class="nm" style="font-weight:500">${escapeHtml(friendly(c.page))}</span>` +
             `<span class="path">${escapeHtml(c.page)}</span></td>` +
           `<td>${stepCell(c.page)}</td>` +
+          (showSessions ? `<td class="num">${c.keyEvent && c.sessions !== undefined && c.sessions !== null ? fmt(c.sessions) : '—'}</td>` : '') +
           `<td class="num">${fmt(c.count)}</td>` +
           bar(c.count, c.keyEvent ? KEY_EVENT_COLOR : EVENT_COLOR) +
           `<td><span class="ev-actions">${chain ? '<button type="button" class="see-path">See path</button>' : ''}` +
@@ -2121,7 +2354,7 @@ function setView(view){
   document.getElementById('legend').style.display = view === 'pathway' ? '' : 'none';
   document.getElementById('footerMain').textContent = view === 'events'
     ? 'Counts are sessions and the number of times each event fired, for the traffic and location picked above. Gold ★ marks a Key Event — Google Analytics\' term for what used to be called a conversion. Automatic events (page views, scrolls, session starts, engagement pings) are left out so real actions stand out.'
-    : 'Counts are sessions — one visit by one person, however many pages they open in it. The figure at the trunk is every session in the period for the traffic and location picked above, and the branches beneath it are the pages those sessions started on. A page marked ↗ opens the live page in a new tab.';
+    : 'Counts are sessions — one visit by one person, however many pages they open in it. The figure at the trunk is every session in the period for the traffic and location picked above, and the branches beneath it are the pages those sessions started on. A gold ★ with a number is how many of those sessions reached a key event. A page marked ↗ opens the live page in a new tab.';
   renderCurrent();
 }
 function renderCurrent(){
@@ -2188,7 +2421,7 @@ const FETCH_TIMEOUT_MS = 150000;          // a cold 12-month build is the slowes
 const FETCH_ATTEMPTS   = 3;
 const RETRY_PAUSE_MS   = [800, 2500];     // between attempt 1→2 and 2→3
 const STORE_ROOT       = 'jlPathway:';
-const STORE_PREFIX     = STORE_ROOT + 'v10:'; // bumped with the Apps Script, so old-shape data is ignored
+const STORE_PREFIX     = STORE_ROOT + 'v11:'; // bumped with the Apps Script, so old-shape data is ignored
 
 const combinationCache = new Map();  // 'month:1|organic|ca|alberta' -> payload
 const inFlight = new Map();          // one request per view, however many clicks
@@ -2324,6 +2557,8 @@ function applyData(d, key){
   state.eventRows = d.eventRows || [];
   state.eventsError = d.eventsError || null;
   state.pageSessions = d.pageSessions || null;
+  state.keyEvents = d.keyEvents || null;
+  state.keyEventsError = d.keyEventsError || null;
   state.channelTotals = d.channelTotals || null;
   state.channelGroups = d.channelGroups || null;
   state.locationTotals = normalizeLocations(d.locationTotals);
@@ -2339,6 +2574,7 @@ function applyData(d, key){
     if (learned) savePins();
   }
   buildChainIndex();
+  buildKeyByPage();
 
   // Keep whatever was ticked if it still exists in the new view —
   // switching from All to Organic, or from Canada to Alberta, shouldn't
@@ -2351,6 +2587,9 @@ function applyData(d, key){
     state.expanded = new Set(state.selected.slice(0, DEFAULT_OPEN_COUNT).map(p => keyOf([p])));
   }
   if (!sameView) state.evOpen.clear();
+  // A key event picked in the old view may not exist in the new one.
+  const present = new Set(state.eventRows.map(r => r.event));
+  [...state.evTypes].forEach(t => { if (!present.has(t)) state.evTypes.delete(t); });
   renderChannelCounts();
   renderLocations();
   renderLocBrowser();
@@ -2457,6 +2696,13 @@ function fetchCombination(period, channel, loc){
           eventRows: data.eventsByPage || [],
           eventsError: data.eventsByPageError || null,
           pageSessions: data.pageSessions || null,
+          // An Apps Script older than v11 doesn't send key events at all;
+          // everything else from it is still right, so show it and say why
+          // the key events are missing.
+          keyEvents: data.keyEvents || null,
+          keyEventsError: data.keyEvents === undefined
+            ? 'the Apps Script is an older version. Deploy the updated Code.gs (v11) as a new version'
+            : (data.keyEventsError || null),
           channelTotals: data.channelTotals || null,
           channelGroups: data.channelGroups || null,
           locationTotals: normalizeLocations(data.locationTotals),
