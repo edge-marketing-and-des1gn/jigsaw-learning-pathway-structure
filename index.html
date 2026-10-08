@@ -270,6 +270,7 @@
   #chart .n-nm.root{font-size:14px;font-weight:600;}
   #chart .n-val{font-size:11px;font-weight:500;fill:var(--ink-3);font-variant-numeric:tabular-nums;}
   #chart .n-key{font-size:11px;font-weight:600;fill:var(--key);font-variant-numeric:tabular-nums;pointer-events:none;}
+  #chart .n-key.hint{font-size:12px;font-weight:400;fill-opacity:.75;}
   /* Pages with more journey behind them: a white pill with a + button.
      A solid ink + means there's more to see; an outlined − means the
      next step is already open. */
@@ -366,7 +367,7 @@
   #tooltip .t-key.dim{color:var(--ink-3);font-size:12px;}
   #tooltip .t-krow{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--ink-2);}
   #tooltip .t-krow b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;}
-  #tooltip .t-kmore{font-size:12px;color:var(--ink-3);}
+  #tooltip .t-kmore{font-size:12px;color:var(--ink-3);margin-top:3px;line-height:1.4;}
 
   /* ---------- footer ---------- */
   footer{margin:34px 0 0;padding:0;color:var(--ink-2);font-size:13.5px;line-height:1.65;}
@@ -518,8 +519,8 @@
       <span class="legend-item"><span class="swatch" style="background:var(--c-company)"></span>Company and events</span>
       <span class="legend-item"><span class="swatch" style="background:var(--c-contact)"></span>Free trial and store</span>
       <span class="legend-item"><span class="swatch" style="background:var(--c-other)"></span>Other pages</span>
-      <span class="legend-item is-how"><span class="key-sample">★12</span>Sessions that started here and reached a key event</span>
-      <span class="legend-item"><span class="key-sample">★</span>A key event happens on this page</span>
+      <span class="legend-item is-how"><span class="key-sample">★12</span>Sessions from this starting page that reached a key event</span>
+      <span class="legend-item"><span class="key-sample">☆</span>Where on the branch it can happen (already in the ★ number)</span>
       <span class="legend-item is-how"><span class="chip-sample">+</span>Opens the next step, − closes it</span>
     </div>
     <div class="panel-wait" id="waitPathway" role="status" aria-live="polite"><span class="spinner"></span><span id="waitPathwayText">Fetching this period from Google Analytics…</span></div>
@@ -584,7 +585,7 @@
       <summary>How this report is put together</summary>
       <p>Sessions are grouped first by the page they started on, which is why the total matches Google Analytics' own session count rather than only counting homepage arrivals. The step after a starting page is an exact count: sessions that started there and opened that page next. From the third page on, numbers marked ≈ are estimates. Google Analytics' reporting API doesn't hand out full step-by-step sequences (its Path Exploration report isn't available through it), so each deeper step takes the sessions on that branch and applies the share of visitors who moved on from that page to each next one, among sessions that started on the same page. That way each journey thins out step by step the way real visits do, and ends once a step drops below one session.</p>
       <p>A + marks a page with a next step: click it to open that one step, then keep clicking the + on the pages beneath to follow the journey as far as you like. − closes a step and everything opened under it. "Collapse steps" closes them all.</p>
-      <p>Key events are the actions marked as Key Events in Google Analytics (what it used to call conversions), such as a lead form or a free-trial sign-up. "Reached a key event" counts each session once, however many key events it fired, using Google Analytics' session key event rate. Beside each key event is the number of sessions that fired it at least once; hover it for how many times it fired in all. A session that fired two different key events counts under both, so those can add up to more than the overall figure. On the chart, a ★ with a number beside the trunk or a starting page is an exact count of the sessions there that reached a key event, and the starting pages add back up to the trunk. Further along a journey a ★ on its own means a key event happens on that page. That comes from the page as a whole, in the period, traffic and location on screen, rather than from that one journey, which is why it carries no number; hover it to see which key events and how many sessions.</p>
+      <p>Key events are the actions marked as Key Events in Google Analytics (what it used to call conversions), such as a lead form or a free-trial sign-up. "Reached a key event" counts each session once, however many key events it fired, using Google Analytics' session key event rate. Beside each key event is the number of sessions that fired it at least once; hover it for how many times it fired in all. A session that fired two different key events counts under both, so those can add up to more than the overall figure. On the chart, each branch has one key-event number: the ★ beside its starting page, an exact count of the sessions that started there and reached a key event anywhere in their visit. The starting pages add back up to the ★ on the trunk. Further along a branch, a hollow ☆ marks a page where key events happen. It is not a second, separate count: anyone on that branch who fired a key event there is already inside the starting page's ★ number. It carries no number because Google Analytics reports key events for a page as a whole, not for one path through it; hover it to see which key events happen there. A branch whose starting page has no ★ shows no ☆ either, since none of its sessions reached a key event.</p>
       <p>Traffic types are Google Analytics' own session channel groups, applied at the source: picking one rebuilds the whole report from that traffic rather than filtering a mixed one afterwards. Organic covers organic search, social, video and shopping. Paid covers paid search, social, shopping, video, display and cross-network. Direct is visits with no known source, such as a typed address or a bookmark. Referral is visits from links on other websites. Other is everything Google Analytics files anywhere else — email, affiliates, text messages, and traffic it couldn't classify; hover the Other button to see what is in it. The five add up to All traffic.</p>
       <p>Location is Google Analytics' own country and region for each visitor, worked out from their IP address, and it is applied at the source in the same way: picking a place rebuilds the paths, events and totals from that place's sessions for the period and traffic type on screen. "Browse all locations" lists every country that sent sessions, each opening to its provinces or states; click one to filter by it, or pin it to keep it as a button. The number on each button is its sessions for the period and traffic type on screen. Regions add up to their country, and countries add up to All locations. "Unknown" entries are visitors Google couldn't place. IP-based location is approximate — a VPN, a mobile carrier or a head-office network can put a visitor in the wrong place.</p>
       <p>Addresses that differ only by a tracking code (?utm_…, ?gclid=…), a #section link, http/https, www, a trailing slash or capital letters (/wecollab/free-trial and /wecollab/FREE-trial) are counted as the same page. Smaller paths are grouped into "Other pages" so no branch becomes a wall of tiny entries; it's a group rather than one page, so it isn't linked or expandable.</p>
@@ -1789,12 +1790,18 @@ function renderChart(){
         (open ? 'Close the next step.' : 'Open the next step.'));
     }
 
-    // Key events. The trunk and the starting pages carry an exact count
-    // of sessions that reached one; further along, a lone ★ marks a page
-    // where a key event happens.
-    const keyInfo = v.depth === 0 ? state.keyEvents : v.depth === 1 ? landingKey(v.name) : null;
-    const pageKeys = v.depth >= 2 ? (state.keyByPage.get(v.name) || null) : null;
-    const keyText = keyInfo && keyInfo.sessions ? '★' + fmt(keyInfo.sessions) : pageKeys ? '★' : '';
+    // Key events. Each branch has ONE number: the ★ count on its
+    // starting page, which is every session on that branch that reached
+    // a key event anywhere in its visit. Further along, a hollow ☆ only
+    // points out a page where key events happen; it is never extra on
+    // top of the ★ number, so it has no number of its own. It's left off
+    // a branch whose starting page has no ★, because nothing on that
+    // branch reached a key event.
+    const startNode = v.depth >= 1 ? chain[1] : null;
+    const startKey = startNode ? landingKey(startNode.name) : null;
+    const keyInfo = v.depth === 0 ? state.keyEvents : v.depth === 1 ? startKey : null;
+    const pageKeys = v.depth >= 2 && startKey && startKey.sessions ? (state.keyByPage.get(v.name) || null) : null;
+    const keyText = keyInfo && keyInfo.sessions ? '★' + fmt(keyInfo.sessions) : pageKeys ? '☆' : '';
 
     const labelX = x + BAR_W + 8;
     const nameX = labelX + (canOpen ? 22 : 0);
@@ -1819,7 +1826,7 @@ function renderChart(){
     }, fit(v.depth === 0 ? rootLabel() : friendly(v.name), nameFont, nameMax)));
     if (keyText){
       g.appendChild(el('text', {
-        class: 'n-key', x: rightEdge - extW - valW - 7, y: v.y, 'dominant-baseline': 'middle', 'text-anchor': 'end'
+        class: 'n-key' + (pageKeys ? ' hint' : ''), x: rightEdge - extW - valW - 7, y: v.y, 'dominant-baseline': 'middle', 'text-anchor': 'end'
       }, keyText));
     }
     g.appendChild(el('text', {
@@ -1847,13 +1854,19 @@ function renderChart(){
         : '<div class="t-meta is-how">No onward pages traced from here</div>';
 
       let keyHtml = '';
+      const startName = startNode ? friendly(startNode.name) : '';
       if (v.depth <= 1 && state.keyEvents){
         keyHtml = keyInfo && keyInfo.sessions
-          ? `<div class="t-key"><span class="star">★</span> <span class="t-val">${fmt(keyInfo.sessions)}</span> of these sessions reached a key event (${share(keyInfo.sessions, v.value)})</div>` +
-            (keyInfo.events && keyInfo.events.length ? keyRows(keyInfo.events) : '')
+          ? `<div class="t-key"><span class="star">★</span> <span class="t-val">${fmt(keyInfo.sessions)}</span> of these ${fmt(v.value)} sessions reached a key event (${share(keyInfo.sessions, v.value)})</div>` +
+            (keyInfo.events && keyInfo.events.length ? keyRows(keyInfo.events) : '') +
+            `<div class="t-kmore">${v.depth === 0
+              ? 'Each starting page shows its share of these as ★.'
+              : 'Counted anywhere in the visit, so it includes any ☆ pages further along this branch.'}</div>`
           : '<div class="t-key dim">None of these sessions reached a key event</div>';
       } else if (pageKeys){
-        keyHtml = '<div class="t-key"><span class="star">★</span> Key events on this page, across every journey</div>' + keyRows(pageKeys);
+        keyHtml = `<div class="t-key"><span class="star">☆</span> Key events happen on this page</div>` +
+          `<div class="t-kmore">Not extra: anyone on this path who did one is already in ${escapeHtml(startName)}’s ★${fmt(startKey.sessions)}. ` +
+          `Across the whole report, on this page:</div>` + keyRows(pageKeys);
       }
 
       showTip(
